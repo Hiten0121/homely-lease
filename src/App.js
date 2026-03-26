@@ -3,7 +3,7 @@ import {
   Users, CreditCard, Settings, Bell, Home, User, Lock, Mail, LogOut, 
   Smartphone, Zap, ShieldCheck, CheckCircle2, ArrowLeft, ChevronRight, 
   Globe, CreditCard as CardIcon, Eye, Download, X, Upload, Trash2, Save,
-  ShieldAlert, Landmark, Building, Download
+  ShieldAlert, Landmark, Building
 } from 'lucide-react';
 
 const App = () => {
