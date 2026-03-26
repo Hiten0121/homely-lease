@@ -2,6 +2,7 @@
   "name": "admin-portal",
   "version": "0.1.0",
   "private": true,
+  "homepage": "https://hiten0121.github.io/homely-lease/",
   "dependencies": {
     "@tailwindcss/postcss": "^4.2.2",
     "autoprefixer": "^10.4.27",
