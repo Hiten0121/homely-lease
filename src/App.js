@@ -70,7 +70,7 @@ const App = () => {
   return userRole === 'admin' ? (
     <AdminPortal tenants={tenants} notifications={notifications} activeTab={activeTab} setActiveTab={setActiveTab} logout={() => setUserRole(null)} />
   ) : (
-    <TenantPortal tenant={tenants[0]} showPayment={showPaymentSystem} setShowPayment={setShowPaymentSystem} onPay={processTenantPayment} logout={() => setUserRole(null)} />
+    <TenantPortal tenant={tenants[0]} tenants={tenants} showPayment={showPaymentSystem} setShowPayment={setShowPaymentSystem} onPay={processTenantPayment} logout={() => setUserRole(null)} />
   );
 };
 
