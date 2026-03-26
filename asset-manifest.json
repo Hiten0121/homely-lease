@@ -1,13 +1,13 @@
 {
   "files": {
-    "main.css": "/homely-lease/static/css/main.4966a17f.css",
-    "main.js": "/homely-lease/static/js/main.16669d5f.js",
+    "main.css": "/homely-lease/static/css/main.a82c0d42.css",
+    "main.js": "/homely-lease/static/js/main.4dbb6568.js",
     "index.html": "/homely-lease/index.html",
-    "main.4966a17f.css.map": "/homely-lease/static/css/main.4966a17f.css.map",
-    "main.16669d5f.js.map": "/homely-lease/static/js/main.16669d5f.js.map"
+    "main.a82c0d42.css.map": "/homely-lease/static/css/main.a82c0d42.css.map",
+    "main.4dbb6568.js.map": "/homely-lease/static/js/main.4dbb6568.js.map"
   },
   "entrypoints": [
-    "static/css/main.4966a17f.css",
-    "static/js/main.16669d5f.js"
+    "static/css/main.a82c0d42.css",
+    "static/js/main.4dbb6568.js"
   ]
 }
