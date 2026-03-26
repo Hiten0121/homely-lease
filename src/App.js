@@ -3,7 +3,7 @@ import {
   Users, CreditCard, Settings, Bell, Home, User, Lock, Mail, LogOut, 
   Smartphone, Zap, ShieldCheck, CheckCircle2, ArrowLeft, ChevronRight, 
   Globe, CreditCard as CardIcon, Eye, Download, X, Upload, Trash2, Save,
-  ShieldAlert, Landmark, Building
+  ShieldAlert, Landmark, Building, Download
 } from 'lucide-react';
 
 const App = () => {
@@ -269,7 +269,7 @@ const AdminPortal = ({ tenants, notifications, activeTab, setActiveTab, logout }
 };
 
 // --- TENANT PORTAL ---
-const TenantPortal = ({ tenant, showPayment, setShowPayment, onPay, logout }) => {
+const TenantPortal = ({ tenant, tenants, showPayment, setShowPayment, onPay, logout }) => {
   const [activeTab, setActiveTab] = useState('Overview');
   const [profileOpen, setProfileOpen] = useState(false);
 
