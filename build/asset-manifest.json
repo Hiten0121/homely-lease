@@ -1,0 +1,13 @@
+{
+  "files": {
+    "main.css": "/homely-lease/static/css/main.c673f064.css",
+    "main.js": "/homely-lease/static/js/main.82267750.js",
+    "index.html": "/homely-lease/index.html",
+    "main.c673f064.css.map": "/homely-lease/static/css/main.c673f064.css.map",
+    "main.82267750.js.map": "/homely-lease/static/js/main.82267750.js.map"
+  },
+  "entrypoints": [
+    "static/css/main.c673f064.css",
+    "static/js/main.82267750.js"
+  ]
+}

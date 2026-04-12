@@ -1,69 +1,203 @@
-import React, { useState, useEffect } from 'react';
+// import React, { useState } from 'react';
+// import { 
+//   Users, Bell, Home, LogOut, 
+//   Zap, CheckCircle2, ArrowLeft, 
+//   Download, Clock, Filter, TrendingUp, AlertCircle
+// } from 'lucide-react';
+
+import React, { useState } from 'react';
+// import { 
+//   Users, CreditCard, Settings, Bell, Home, User, Lock, LogOut, 
+//   Zap, CheckCircle2, ChevronRight, Download, X, Menu, 
+//   ShieldAlert, Landmark, Save, Eye, Filter, Clock, 
+//   AlertCircle, TrendingUp, ZapOff, Check, Ban
+// } from 'lucide-react';
+
 import { 
   Users, CreditCard, Settings, Bell, Home, User, Lock, Mail, LogOut, 
   Smartphone, Zap, ShieldCheck, CheckCircle2, ArrowLeft, ChevronRight, 
   Globe, CreditCard as CardIcon, Eye, Download, X, Upload, Trash2, Save,
-  ShieldAlert, Landmark, Building, Menu, FileText, Calendar, Clock
+  ShieldAlert, Landmark, Building, Menu, FileText, Calendar, Clock,
+  Coins, Filter, Check, Ban // Added the missing icons here
 } from 'lucide-react';
 
+/**
+ * HOMELY - INTEGRATED PROPERTY MANAGEMENT SYSTEM
+ * * Features included:
+ * - Role-based Dashboard (Resident/Landlord)
+ * - Automatic Electricity Calculation (Units * Price)
+ * - 5-Day Grace Period Late Fee Logic
+ * - Landlord Approval/Rejection Queue
+ * - Financial Statistics Tracking
+ */
+
 const App = () => {
-  const [userRole, setUserRole] = useState(null); 
+  // --- Auth & Navigation State ---
+  const [userRole, setUserRole] = useState(null); // 'admin' or 'tenant'
   const [loginMode, setLoginMode] = useState('tenant'); 
   const [activeTab, setActiveTab] = useState('Dashboard');
-  const [showPaymentSystem, setShowPaymentSystem] = useState(false);
+  const [authData, setAuthData] = useState({ identifier: '', password: '' });
+  const [error, setError] = useState('');
 
-  // --- Central Data Engine ---
+  // --- Central Data Management ---
   const [tenants, setTenants] = useState([
-    { id: 1, name: 'Rajesh Kumar', room: 'A-101', status: 'Pending', amount: '12,500', date: 'N/A', phone: '+91 98765 43210', method: 'N/A', email: 'rajesh.k@example.com', joinDate: '12 Jan 2024' },
-    { id: 2, name: 'Anita Sharma', room: 'B-204', status: 'Pending', amount: '15,000', date: 'N/A', phone: '+91 88776 65544', method: 'N/A', email: 'anita.s@example.com', joinDate: '05 Feb 2025' },
-    { id: 3, name: 'Vikram Singh', room: 'C-302', status: 'Paid', amount: '10,000', date: '24 Mar 2026', phone: '+91 77665 44332', method: 'Debit Card', email: 'vikram.v@example.com', joinDate: '20 Nov 2023' },
-    { id: 4, name: 'Siddharth M.', room: 'D-105', status: 'Paid', amount: '18,500', date: '20 Mar 2026', phone: '+91 99001 12233', method: 'UPI', email: 'sid.m@example.com', joinDate: '15 May 2024' },
-    { id: 5, name: 'Priya Verma', room: 'A-202', status: 'Overdue', amount: '12,500', date: 'N/A', phone: '+91 91234 56789', method: 'N/A', email: 'priya.v@example.com', joinDate: '10 Dec 2024' },
+    { 
+      id: 1, 
+      name: 'Rajesh Kumar', 
+      room: 'A-101', 
+      status: 'Pending', 
+      amount: 12500, 
+      dueDate: '2026-04-05', 
+      prevReading: 1020,
+      currReading: 1150,
+      unitPrice: 10,
+      lateFeePerDay: 50,
+      email: 'rajesh.k@example.com',
+      history: [{ month: 'March', amount: 13200, status: 'Paid', date: '02/03/2026' }]
+    },
+    { 
+      id: 2, 
+      name: 'Anita Sharma', 
+      room: 'B-204', 
+      status: 'Pending Approval', 
+      amount: 15000, 
+      dueDate: '2026-04-05', 
+      prevReading: 500, 
+      currReading: 580, 
+      unitPrice: 10, 
+      lateFeePerDay: 50,
+      email: 'anita.s@example.com',
+      history: []
+    },
   ]);
 
-  // Added expanded sample notification data for the landlord
   const [notifications, setNotifications] = useState([
-    { id: 1, title: 'Server Maintenance', desc: 'Portal will be down at 2 AM IST for optimization.', time: '2h ago', type: 'info' },
-    { id: 2, title: 'New Tenant Request', desc: 'Room D-401 has a new applicant: Megha Rao.', time: '5h ago', type: 'alert' },
-    { id: 3, title: 'Payment Success', desc: 'Siddharth (D-105) settled March rent via UPI.', time: '1d ago', type: 'success' },
-    { id: 4, title: 'Late Rent Warning', desc: 'Priya Verma (A-202) is 3 days overdue.', time: '1d ago', type: 'alert' },
-    { id: 5, title: 'Document Uploaded', desc: 'Anita Sharma updated her Police Verification.', time: '2d ago', type: 'success' },
-    { id: 6, title: 'Security Alert', desc: 'Unrecognized login attempt from Chrome on Windows.', time: '3d ago', type: 'alert' }
+    { message: "Anita Sharma submitted a payment for approval", time: "2 hours ago" },
+    { message: "System: Electricity unit rates updated to ₹10/unit", time: "1 day ago" }
   ]);
 
-  const processTenantPayment = (method) => {
-    const today = new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
-    setTenants(prev => prev.map(t => t.id === 1 ? { ...t, status: 'Paid', date: today, method: method } : t));
-    setNotifications(prev => [{
-      id: Date.now(),
-      title: 'Payment Received',
-      desc: `₹12,500 from Rajesh (A-101) via ${method}`,
-      time: 'Just now',
-      type: 'success'
-    }, ...prev]);
-    setShowPaymentSystem(false);
+  // --- Core Utility Logic ---
+  const calculateElectricity = (t) => (t.currReading - t.prevReading) * t.unitPrice;
+  
+  const calculateLateFee = (t) => {
+    const due = new Date(t.dueDate);
+    const today = new Date();
+    const diffTime = today - due;
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    return diffDays > 5 ? (diffDays - 5) * t.lateFeePerDay : 0;
   };
 
+  const getTotalPayable = (t) => t.amount + calculateElectricity(t) + calculateLateFee(t);
+
+  // --- Auth Handler ---
+  const handleLogin = (e) => {
+    e.preventDefault();
+    setError('');
+
+    // Demo Credentials
+    const credentials = {
+      admin: { id: 'admin123', pass: 'landlord@2026' },
+      tenant: { id: '9876543210', pass: 'tenant@101' }
+    };
+
+    if (loginMode === 'admin') {
+      if (authData.identifier === credentials.admin.id && authData.password === credentials.admin.pass) {
+        setUserRole('admin');
+        setActiveTab('Dashboard');
+      } else {
+        setError('Invalid Landlord Credentials');
+      }
+    } else {
+      if (authData.identifier === credentials.tenant.id && authData.password === credentials.tenant.pass) {
+        setUserRole('tenant');
+        setActiveTab('Overview');
+      } else {
+        setError('Invalid Resident ID or Password');
+      }
+    }
+  };
+
+  const handleLogout = () => {
+    setUserRole(null);
+    setAuthData({ identifier: '', password: '' });
+    setError('');
+  };
+
+  // --- Admin Logic ---
+  const handleLandlordAction = (tenantId, action) => {
+    setTenants(prev => prev.map(t => {
+      if (t.id === tenantId) {
+        if (action === 'approve') {
+          return { 
+            ...t, 
+            status: 'Paid',
+            history: [{ month: 'Current', amount: getTotalPayable(t), status: 'Paid', date: new Date().toLocaleDateString() }, ...t.history]
+          };
+        }
+        return { ...t, status: 'Rejected' };
+      }
+      return t;
+    }));
+  };
+
+  // --- LOGIN SCREEN ---
   if (!userRole) {
     return (
-      <div className="min-h-screen bg-[#0F172A] flex items-center justify-center p-4 md:p-6 font-sans">
-        <div className="w-full max-w-4xl bg-white rounded-[2rem] md:rounded-[3rem] overflow-hidden shadow-2xl grid grid-cols-1 md:grid-cols-2">
-          <div className="bg-slate-900 p-8 md:p-16 text-white flex flex-col justify-between hidden md:flex">
+      <div className="min-h-screen bg-[#0F172A] flex items-center justify-center p-4">
+        <div className="w-full max-w-4xl bg-white rounded-[3.5rem] overflow-hidden shadow-2xl grid grid-cols-1 md:grid-cols-2">
+          {/* Branding */}
+          <div className="bg-slate-900 p-16 text-white flex flex-col justify-between hidden md:flex">
             <div className="flex items-center gap-3 italic font-black text-2xl">
               <div className="w-10 h-10 bg-indigo-600 rounded-2xl flex items-center justify-center not-italic">H</div> Homely
             </div>
-            <h1 className="text-5xl font-black leading-tight italic">Your Home,<br/>Managed.<br/>Better.</h1>
-            <p className="text-slate-500 font-bold uppercase tracking-widest text-xs italic">Version 4.0.2 Stable</p>
+            <h1 className="text-5xl font-black leading-tight italic">Manage Your<br/>Property.<br/>Better.</h1>
+            <div className="p-6 bg-slate-800/50 rounded-3xl border border-slate-700">
+              <p className="text-[10px] font-bold text-slate-400 uppercase mb-2">Demo Access:</p>
+              <p className="text-[9px] text-indigo-400 font-mono">Admin: admin123 / landlord@2026</p>
+              <p className="text-[9px] text-indigo-400 font-mono">Tenant: 9876543210 / tenant@101</p>
+            </div>
           </div>
+
+          {/* Form */}
           <div className="p-8 md:p-16 flex flex-col justify-center">
             <div className="flex gap-2 p-1 bg-slate-100 rounded-2xl mb-10">
               <button onClick={() => setLoginMode('tenant')} className={`flex-1 py-4 rounded-xl text-[10px] font-black uppercase transition-all ${loginMode === 'tenant' ? 'bg-white text-indigo-600 shadow-xl' : 'text-slate-400'}`}>Resident</button>
               <button onClick={() => setLoginMode('admin')} className={`flex-1 py-4 rounded-xl text-[10px] font-black uppercase transition-all ${loginMode === 'admin' ? 'bg-white text-indigo-600 shadow-xl' : 'text-slate-400'}`}>Landlord</button>
             </div>
-            <form onSubmit={(e) => {e.preventDefault(); setUserRole(loginMode); setActiveTab(loginMode === 'admin' ? 'Dashboard' : 'Overview');}} className="space-y-4">
-              <input type="text" placeholder="ID Number / Mobile" className="w-full bg-slate-50 border-none rounded-2xl py-5 px-8 font-black outline-none" required />
-              <input type="password" placeholder="Password" className="w-full bg-slate-50 border-none rounded-2xl py-5 px-8 font-black outline-none" required />
-              <button className="w-full bg-slate-900 text-white font-black py-5 rounded-2xl uppercase tracking-[0.2em] text-xs shadow-2xl hover:bg-indigo-600 transition-all">Sign In</button>
+            
+            <form onSubmit={handleLogin} className="space-y-4">
+              <div className="relative">
+                <User className="absolute left-6 top-5 text-slate-300" size={18}/>
+                <input 
+                  type="text" 
+                  placeholder={loginMode === 'admin' ? "Admin ID" : "Mobile Number"} 
+                  value={authData.identifier}
+                  onChange={(e) => setAuthData({...authData, identifier: e.target.value})}
+                  className="w-full bg-slate-50 border-2 border-transparent focus:border-indigo-600 rounded-2xl py-5 pl-16 px-8 font-black outline-none transition-all" 
+                  required 
+                />
+              </div>
+              <div className="relative">
+                <Lock className="absolute left-6 top-5 text-slate-300" size={18}/>
+                <input 
+                  type="password" 
+                  placeholder="Password" 
+                  value={authData.password}
+                  onChange={(e) => setAuthData({...authData, password: e.target.value})}
+                  className="w-full bg-slate-50 border-2 border-transparent focus:border-indigo-600 rounded-2xl py-5 pl-16 px-8 font-black outline-none transition-all" 
+                  required 
+                />
+              </div>
+
+              {error && (
+                <div className="p-4 bg-red-50 text-red-500 rounded-2xl text-[10px] font-black uppercase flex items-center gap-2">
+                  <ShieldAlert size={14}/> {error}
+                </div>
+              )}
+
+              <button className="w-full bg-slate-900 text-white font-black py-5 rounded-2xl uppercase tracking-[0.2em] text-xs shadow-2xl hover:bg-indigo-600 transition-all">
+                Sign In <ChevronRight className="inline ml-2" size={14}/>
+              </button>
             </form>
           </div>
         </div>
@@ -71,400 +205,628 @@ const App = () => {
     );
   }
 
+  // --- MAIN APP ROUTING ---
   return userRole === 'admin' ? (
-    <AdminPortal tenants={tenants} notifications={notifications} activeTab={activeTab} setActiveTab={setActiveTab} logout={() => setUserRole(null)} />
+    <AdminPortal 
+      tenants={tenants} 
+      setTenants={setTenants}
+      notifications={notifications}
+      activeTab={activeTab} 
+      setActiveTab={setActiveTab} 
+      onAction={handleLandlordAction}
+      logout={handleLogout} 
+      calcTotal={getTotalPayable}
+      calcElec={calculateElectricity}
+    />
   ) : (
-    <TenantPortal tenant={tenants[0]} tenants={tenants} showPayment={showPaymentSystem} setShowPayment={setShowPaymentSystem} onPay={processTenantPayment} logout={() => setUserRole(null)} />
+    <TenantPortal 
+      tenant={tenants[0]} 
+      logout={handleLogout} 
+      calcElec={calculateElectricity} 
+      calcLate={calculateLateFee} 
+      calcTotal={getTotalPayable} 
+    />
   );
 };
 
-const AdminPortal = ({ tenants, notifications, activeTab, setActiveTab, logout }) => {
-  const [profileOpen, setProfileOpen] = useState(false);
-  const [selectedTenant, setSelectedTenant] = useState(null);
-  const [sidebarOpen, setSidebarOpen] = useState(false);
 
-  const totalCollected = tenants.reduce((acc, t) => t.status === 'Paid' ? acc + parseInt(t.amount.replace(',','')) : acc, 0);
-  const totalPending = tenants.reduce((acc, t) => (t.status === 'Pending' || t.status === 'Overdue') ? acc + parseInt(t.amount.replace(',','')) : acc, 0);
+// --- Landlord View ---
+const AdminPortal = ({ tenants, setTenants, notifications, activeTab, setActiveTab, onAction, logout, calcTotal, calcElec }) => {
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [isMeterModalOpen, setIsMeterModalOpen] = useState(false);
+  const [editingTenant, setEditingTenant] = useState(null);
+  const [newReading, setNewReading] = useState('');
+
+  // --- Detailed Stats Calculation ---
+  const totalRevenue = tenants.reduce((acc, t) => acc + calcTotal(t), 0);
+  const pendingCount = tenants.filter(t => t.status.includes('Pending')).length;
+  const occupiedRooms = tenants.length;
+
+  const updateMeterReading = () => {
+    if (!newReading || isNaN(newReading)) return;
+    setTenants(prev => prev.map(t => 
+      t.id === editingTenant.id ? { ...t, prevReading: t.currReading, currReading: parseInt(newReading) } : t
+    ));
+    setIsMeterModalOpen(false);
+    setNewReading('');
+    setEditingTenant(null);
+  };
 
   return (
     <div className="flex h-screen bg-[#F8FAFC]">
-      <aside className={`fixed inset-y-0 left-0 z-50 w-72 bg-slate-900 text-white p-8 flex flex-col shrink-0 transition-transform md:relative md:translate-x-0 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+      {/* Sidebar Navigation */}
+      <aside className={`fixed inset-y-0 left-0 z-50 w-72 bg-slate-900 text-white p-8 flex flex-col transition-transform md:relative md:translate-x-0 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
         <div className="flex items-center justify-between mb-12">
           <div className="flex items-center gap-3 font-black italic text-xl">
-            <div className="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center not-italic">H</div> Homely
+            <div className="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center not-italic text-white">H</div> 
+            <span className="tracking-tighter">HOMELY.</span>
           </div>
-          <button onClick={() => setSidebarOpen(false)} className="md:hidden"><X/></button>
+          <button onClick={() => setSidebarOpen(false)} className="md:hidden text-slate-400"><X/></button>
         </div>
+        
         <nav className="space-y-2 flex-1">
-          {['Dashboard', 'Tenants', 'Payments', 'Notifications', 'Settings'].map(tab => (
-            <button key={tab} onClick={() => {setActiveTab(tab); setSidebarOpen(false);}} className={`w-full flex items-center gap-4 px-6 py-4 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === tab ? 'bg-indigo-600 text-white shadow-xl shadow-indigo-900/50' : 'text-slate-500 hover:text-white'}`}>
-              {tab === 'Dashboard' && <Home size={18}/>}
-              {tab === 'Tenants' && <Users size={18}/>}
-              {tab === 'Payments' && <CreditCard size={18}/>}
-              {tab === 'Notifications' && <Bell size={18}/>}
-              {tab === 'Settings' && <Settings size={18}/>}
-              {tab}
+          {[
+            { id: 'Dashboard', icon: <Home size={18}/> },
+            { id: 'Tenants', icon: <Users size={18}/> },
+            { id: 'Billing', icon: <Zap size={18}/> },
+            { id: 'Notifications', icon: <Bell size={18}/> },
+            { id: 'Settings', icon: <Settings size={18}/> }
+          ].map(item => (
+            <button 
+              key={item.id} 
+              onClick={() => {setActiveTab(item.id); setSidebarOpen(false);}} 
+              className={`w-full flex items-center gap-4 px-6 py-4 rounded-2xl text-[10px] font-black uppercase tracking-[0.15em] transition-all ${activeTab === item.id ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/20' : 'text-slate-500 hover:text-white hover:bg-slate-800'}`}
+            >
+              {item.icon} {item.id}
             </button>
           ))}
         </nav>
+
+        <button onClick={logout} className="mt-auto flex items-center gap-4 px-6 py-4 text-slate-500 hover:text-red-400 font-black uppercase text-[10px] tracking-widest">
+          <LogOut size={18}/> Logout
+        </button>
       </aside>
 
       <div className="flex-1 flex flex-col overflow-hidden">
-        <header className="h-24 bg-white border-b px-6 md:px-12 flex items-center justify-between">
-           <div className="flex items-center gap-4">
-             <button onClick={() => setSidebarOpen(true)} className="md:hidden p-2 bg-slate-50 rounded-lg"><Menu size={20}/></button>
-             <h2 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em]">{activeTab}</h2>
-           </div>
-           <div className="relative">
-              <button onClick={() => setProfileOpen(!profileOpen)} className="flex items-center gap-3 p-2 pr-6 bg-slate-50 border rounded-2xl hover:bg-slate-100 transition-all">
-                 <div className="w-10 h-10 bg-slate-900 text-white rounded-xl flex items-center justify-center font-black">AD</div>
-                 <span className="text-xs font-black uppercase italic hidden sm:inline">Manager <ChevronRight size={12}/></span>
-              </button>
-              {profileOpen && (
-                 <div className="absolute right-0 mt-4 w-52 bg-white rounded-2xl shadow-2xl border p-2 z-50">
-                    <button onClick={() => {setActiveTab('Settings'); setProfileOpen(false);}} className="w-full flex items-center gap-3 p-4 text-[10px] font-black text-slate-600 hover:bg-slate-50 rounded-xl uppercase"><User size={14}/> Profile</button>
-                    <button onClick={logout} className="w-full flex items-center gap-3 p-4 text-[10px] font-black text-red-500 hover:bg-red-50 rounded-xl uppercase border-t mt-2 pt-4"><LogOut size={14}/> Sign Out</button>
-                 </div>
-              )}
-           </div>
+        {/* Top Header */}
+        <header className="h-24 bg-white/80 backdrop-blur-md border-b px-8 flex items-center justify-between sticky top-0 z-10">
+          <div className="flex items-center gap-4">
+            <button onClick={() => setSidebarOpen(true)} className="md:hidden p-3 bg-slate-100 rounded-xl text-slate-600"><Menu size={20}/></button>
+            <h2 className="text-sm font-black text-slate-900 uppercase tracking-widest">{activeTab}</h2>
+          </div>
+          <div className="flex items-center gap-6">
+            <div className="hidden sm:block text-right">
+              <p className="text-[10px] font-black text-slate-400 uppercase">System Status</p>
+              <p className="text-[10px] font-bold text-emerald-500 flex items-center justify-end gap-1">
+                <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse mr-1 inline-block"/> LIVE
+              </p>
+            </div>
+            <div className="w-12 h-12 bg-slate-100 border rounded-2xl flex items-center justify-center font-black text-slate-600 shadow-inner">AD</div>
+          </div>
         </header>
 
-        <main className="flex-1 overflow-y-auto p-6 md:p-12">
+        <main className="flex-1 overflow-y-auto p-8 md:p-12 space-y-10">
+          
+          {/* DASHBOARD TAB */}
           {activeTab === 'Dashboard' && (
-            <div className="space-y-12 animate-in fade-in duration-500">
-               <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                  <div className="bg-white p-10 rounded-[3rem] border shadow-sm flex justify-between items-center">
-                      <div><p className="text-[10px] font-black text-slate-400 uppercase mb-2">Collected</p><h3 className="text-4xl font-black italic text-emerald-600">₹{totalCollected.toLocaleString()}</h3></div>
-                      <Landmark className="text-emerald-500/20" size={48}/>
-                  </div>
-                  <div className="bg-white p-10 rounded-[3rem] border shadow-sm flex justify-between items-center">
-                      <div><p className="text-[10px] font-black text-slate-400 uppercase mb-2">Pending</p><h3 className="text-4xl font-black italic text-red-500">₹{totalPending.toLocaleString()}</h3></div>
-                      <ShieldAlert className="text-red-500/20" size={48}/>
-                  </div>
-                  <div className="bg-indigo-600 p-10 rounded-[3rem] shadow-2xl text-white">
-                      <p className="text-[10px] font-black uppercase mb-2 text-indigo-200">System Health</p>
-                      <h3 className="text-4xl font-black italic flex items-center gap-3">Good <div className="w-3 h-3 bg-emerald-400 rounded-full animate-pulse"></div></h3>
-                  </div>
-               </div>
+            <div className="space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-700">
+              <section className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm relative overflow-hidden group hover:border-indigo-200 transition-all">
+                  <div className="absolute top-0 right-0 p-8 text-slate-50 group-hover:text-indigo-50 transition-colors"><Building size={80}/></div>
+                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Expected Revenue</p>
+                  <h3 className="text-4xl font-black italic text-slate-900">₹{totalRevenue.toLocaleString()}</h3>
+                </div>
+                
+                <div className="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm">
+                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Total Tenants</p>
+                  <h3 className="text-4xl font-black italic text-slate-900">{occupiedRooms} <span className="text-sm not-italic font-bold text-slate-300">/ 20</span></h3>
+                </div>
 
-               <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
-                  <div className="bg-white rounded-[3.5rem] border shadow-sm p-10">
-                     <h3 className="text-xs font-black uppercase mb-8 italic flex items-center gap-2">Home Notifications <span className="bg-indigo-100 text-indigo-600 px-3 py-1 rounded-full text-[9px]">{notifications.length}</span></h3>
-                     <div className="space-y-4">
-                        {notifications.map(n => (
-                           <div key={n.id} className="flex gap-4 p-5 bg-slate-50 rounded-2xl border border-slate-100">
-                              <div className={`w-1 h-12 rounded-full ${n.type === 'success' ? 'bg-emerald-400' : n.type === 'alert' ? 'bg-red-400' : 'bg-indigo-400'}`}></div>
-                              <div><p className="text-xs font-black italic">{n.title}</p><p className="text-[10px] font-bold text-slate-400">{n.desc}</p></div>
-                              <span className="ml-auto text-[8px] font-black text-slate-300 uppercase">{n.time}</span>
+                <div className="bg-indigo-600 p-8 rounded-[2.5rem] shadow-xl shadow-indigo-200 text-white">
+                  <p className="text-[10px] font-black text-indigo-200 uppercase tracking-widest mb-2">Action Required</p>
+                  <h3 className="text-4xl font-black italic">{pendingCount} <span className="text-sm not-italic font-bold text-indigo-300">Pending</span></h3>
+                </div>
+              </section>
+
+              {/* Approval Table */}
+              <div className="bg-white rounded-[3rem] border border-slate-100 shadow-sm overflow-hidden">
+                <table className="w-full text-left">
+                  <thead className="bg-slate-50 border-b border-slate-100">
+                    <tr>
+                      <th className="p-8 text-[9px] font-black text-slate-400 uppercase">Resident Details</th>
+                      <th className="p-8 text-[9px] font-black text-slate-400 uppercase text-right">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-50">
+                    {tenants.map(t => (
+                      <tr key={t.id} className="hover:bg-slate-50/50 transition-colors group">
+                        <td className="p-8">
+                          <div className="flex items-center gap-4">
+                            <div className="w-12 h-12 bg-slate-900 text-white rounded-2xl flex items-center justify-center font-black italic">{t.room}</div>
+                            <div>
+                              <p className="font-black text-slate-900 italic">{t.name}</p>
+                              <p className={`text-[8px] font-black uppercase px-2 py-0.5 rounded-full inline-block mt-1 ${t.status === 'Paid' ? 'bg-emerald-50 text-emerald-600' : 'bg-amber-50 text-amber-600'}`}>
+                                {t.status}
+                              </p>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="p-8 text-right">
+                           <div className="flex items-center justify-end gap-2">
+                             {t.status === 'Pending Approval' && (
+                               <>
+                                 <button onClick={() => onAction(t.id, 'approve')} className="p-3 bg-emerald-500 text-white rounded-xl hover:bg-emerald-600 transition-all shadow-lg shadow-emerald-200"><Check size={16}/></button>
+                                 <button onClick={() => onAction(t.id, 'reject')} className="p-3 bg-red-100 text-red-500 rounded-xl hover:bg-red-200 transition-all"><Ban size={16}/></button>
+                               </>
+                             )}
                            </div>
-                        ))}
-                     </div>
-                  </div>
-
-                  <div className="bg-white rounded-[3.5rem] border shadow-sm overflow-hidden flex flex-col">
-                     <div className="p-10 pb-6"><h3 className="text-xs font-black uppercase italic">Recent Transactions</h3></div>
-                     <div className="overflow-x-auto">
-                        <table className="w-full text-left">
-                           <thead className="bg-slate-50 text-[9px] font-black text-slate-400 uppercase"><tr className="border-y"><th className="px-10 py-4">Tenant</th><th className="px-10 py-4">Method</th><th className="px-10 py-4 text-right">Status</th></tr></thead>
-                           <tbody>
-                              {tenants.map(t => (
-                                 <tr key={t.id} className="border-b border-slate-50 last:border-0">
-                                    <td className="px-10 py-6 font-bold text-xs">{t.name}</td>
-                                    <td className="px-10 py-6 font-black text-[9px] text-indigo-600 uppercase italic">{t.method}</td>
-                                    <td className="px-10 py-6 text-right"><span className={`px-4 py-1 rounded-full text-[8px] font-black uppercase ${t.status === 'Paid' ? 'bg-emerald-100 text-emerald-600' : t.status === 'Overdue' ? 'bg-red-600 text-white' : 'bg-red-100 text-red-600'}`}>{t.status}</span></td>
-                                 </tr>
-                              ))}
-                           </tbody>
-                        </table>
-                     </div>
-                  </div>
-               </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
           )}
 
+          {/* TENANTS TAB */}
           {activeTab === 'Tenants' && (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 animate-in slide-in-from-bottom-8">
-               {tenants.map(t => (
-                  <div key={t.id} className="bg-white p-10 rounded-[3rem] border shadow-sm group hover:border-indigo-600 transition-all">
-                     <div className="w-16 h-16 bg-slate-50 rounded-2xl flex items-center justify-center font-black text-slate-300 text-xl mb-6 group-hover:bg-indigo-600 group-hover:text-white transition-all">{t.name[0]}</div>
-                     <h4 className="text-2xl font-black italic mb-1">{t.name}</h4>
-                     <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-10">{t.room}</p>
-                     <button onClick={() => setSelectedTenant(t)} className="w-full py-4 bg-slate-900 text-white rounded-2xl font-black uppercase text-[10px] tracking-widest hover:bg-indigo-600 transition-all flex items-center justify-center gap-2 shadow-xl shadow-indigo-100"><Eye size={16}/> View Records</button>
-                  </div>
-               ))}
-            </div>
-          )}
-
-          {activeTab === 'Payments' && (
-             <div className="bg-white rounded-[3rem] border shadow-sm overflow-hidden animate-in fade-in">
-                <div className="p-10 flex justify-between items-end border-b">
-                   <h3 className="text-3xl font-black italic uppercase">Financial Ledger</h3>
-                   <button className="flex items-center gap-2 text-[10px] font-black text-indigo-600 uppercase border-b border-indigo-600"><Download size={14}/> Export CSV</button>
-                </div>
-                <div className="overflow-x-auto">
-                   <table className="w-full text-left">
-                     <thead className="bg-slate-50 text-[10px] font-black text-slate-400 uppercase">
-                       <tr className="border-y">
-                         <th className="px-10 py-6">Ref ID</th>
-                         <th className="px-10 py-6">Tenant Name</th>
-                         <th className="px-10 py-6">Payment Date</th>
-                         <th className="px-10 py-6">Amount</th>
-                         <th className="px-10 py-6">Status</th>
-                       </tr>
-                     </thead>
-                     <tbody>
-                       {tenants.map(t => (
-                         <tr key={t.id} className="border-b border-slate-50 last:border-0 hover:bg-slate-50/50">
-                           <td className="px-10 py-6 font-mono text-[10px] text-slate-400">#HMLY-{t.id}024</td>
-                           <td className="px-10 py-6 font-bold text-xs">{t.name}</td>
-                           <td className="px-10 py-6 text-xs text-slate-500 italic">{t.date}</td>
-                           <td className="px-10 py-6 font-black italic text-slate-900">₹{t.amount}</td>
-                           <td className="px-10 py-6">
-                              <span className={`px-4 py-1 rounded-full text-[8px] font-black uppercase ${t.status === 'Paid' ? 'bg-emerald-100 text-emerald-600' : 'bg-red-100 text-red-600'}`}>{t.status}</span>
-                           </td>
-                         </tr>
-                       ))}
-                     </tbody>
-                   </table>
-                </div>
-             </div>
-          )}
-
-          {activeTab === 'Notifications' && (
-            <div className="max-w-4xl space-y-6 animate-in fade-in">
-              <h3 className="text-3xl font-black italic uppercase mb-8">System Alerts</h3>
-              {notifications.map(n => (
-                <div key={n.id} className="bg-white p-8 rounded-[2.5rem] border flex items-center justify-between group hover:border-indigo-600 transition-all">
-                  <div className="flex items-center gap-6">
-                    <div className={`w-12 h-12 rounded-2xl flex items-center justify-center font-black text-xs ${n.type === 'success' ? 'bg-emerald-50 text-emerald-600' : n.type === 'alert' ? 'bg-red-50 text-red-600' : 'bg-indigo-50 text-indigo-600'}`}>
-                      {n.type === 'success' ? 'OK' : n.type === 'alert' ? '!!' : 'i'}
-                    </div>
-                    <div>
-                      <p className="text-lg font-black italic">{n.title}</p>
-                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{n.desc}</p>
-                    </div>
-                  </div>
-                  <span className="text-[8px] font-black text-slate-300 uppercase">{n.time}</span>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-in fade-in slide-in-from-right-4 duration-500">
+              {tenants.map(t => (
+                <div key={t.id} className="bg-white p-8 rounded-[3rem] border border-slate-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all flex items-center gap-8 group">
+                   <div className="w-20 h-20 bg-slate-100 rounded-[2rem] flex items-center justify-center text-slate-900 font-black italic text-2xl group-hover:bg-indigo-600 group-hover:text-white transition-colors duration-500">
+                     {t.room}
+                   </div>
+                   <div className="flex-1">
+                     <h4 className="text-xl font-black italic text-slate-900">{t.name}</h4>
+                     <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2 mt-1">
+                       <Mail size={12}/> {t.email}
+                     </p>
+                     <div className="flex gap-4 mt-4">
+                       <button className="text-[9px] font-black uppercase text-indigo-600 bg-indigo-50 px-4 py-2 rounded-xl">Edit Profile</button>
+                       <button className="text-[9px] font-black uppercase text-slate-400 hover:text-red-500">End Lease</button>
+                     </div>
+                   </div>
                 </div>
               ))}
             </div>
           )}
 
-          {activeTab === 'Settings' && (
-            <div className="max-w-4xl grid grid-cols-1 lg:grid-cols-2 gap-12 animate-in slide-in-from-bottom-8">
-               <div className="bg-white p-12 rounded-[3.5rem] border shadow-sm space-y-10">
-                  <h3 className="text-2xl font-black italic uppercase">Management Profile</h3>
-                  <div className="flex items-center gap-6 mb-12">
-                     <div className="w-24 h-24 bg-slate-900 text-white rounded-[2rem] flex items-center justify-center text-3xl font-black italic shadow-2xl">HQ</div>
-                     <div><p className="text-2xl font-black italic">Homely Group Inc.</p><p className="text-xs font-bold text-slate-400 uppercase">Master Landlord</p></div>
-                  </div>
-                  <div className="space-y-4">
-                     <div className="p-6 bg-slate-50 rounded-3xl"><p className="text-[9px] font-black text-slate-400 uppercase mb-2">Support Email</p><p className="font-black italic">admin@homelylease.com</p></div>
-                     <div className="p-6 bg-slate-50 rounded-3xl"><p className="text-[9px] font-black text-slate-400 uppercase mb-2">Portal Access Code</p><p className="font-black italic">HMLY-2026-XPR</p></div>
-                     <button className="w-full py-5 bg-indigo-600 text-white rounded-[1.5rem] font-black uppercase text-[10px] tracking-widest flex items-center justify-center gap-3 shadow-xl shadow-indigo-200"><Save size={16}/> Apply Global Changes</button>
-                  </div>
-               </div>
-               <div className="space-y-8">
-                  <div className="bg-white p-10 rounded-[3rem] border shadow-sm">
-                     <h4 className="text-xs font-black uppercase mb-8 italic flex items-center gap-2 text-indigo-600"><Lock size={16}/> Access Control</h4>
-                     <div className="space-y-4">
-                        <div className="flex justify-between items-center p-5 bg-slate-50 rounded-2xl">
-                           <span className="text-[10px] font-black uppercase">Enable Auto-Receipts</span>
-                           <div className="w-12 h-6 bg-emerald-500 rounded-full flex items-center px-1"><div className="w-4 h-4 bg-white rounded-full ml-auto"></div></div>
+          {/* BILLING TAB */}
+          {activeTab === 'Billing' && (
+            <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-500">
+               {tenants.map(t => (
+                 <div key={t.id} className="bg-white p-8 rounded-[3rem] border border-slate-100 shadow-sm flex flex-col md:flex-row items-center gap-8">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-3 mb-2">
+                        <span className="w-10 h-10 bg-slate-900 text-white rounded-xl flex items-center justify-center font-black italic text-xs">{t.room}</span>
+                        <h4 className="text-xl font-black italic">{t.name}</h4>
+                      </div>
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mt-6 p-6 bg-slate-50 rounded-3xl border border-slate-100/50">
+                        <div>
+                          <p className="text-[9px] font-black text-slate-400 uppercase mb-1">Last Meter</p>
+                          <p className="font-bold text-slate-900">{t.currReading} <span className="text-[9px] text-slate-400">kWh</span></p>
                         </div>
-                        <div className="flex justify-between items-center p-5 bg-slate-50 rounded-2xl">
-                           <span className="text-[10px] font-black uppercase">Tenant Late Alerts</span>
-                           <div className="w-12 h-6 bg-indigo-600 rounded-full flex items-center px-1"><div className="w-4 h-4 bg-white rounded-full ml-auto"></div></div>
+                        <div>
+                          <p className="text-[9px] font-black text-slate-400 uppercase mb-1">Elec. Charge</p>
+                          <p className="font-bold text-amber-500">₹{calcElec(t)}</p>
+                        </div>
+                        <div>
+                          <p className="text-[9px] font-black text-slate-400 uppercase mb-1">Rent Amount</p>
+                          <p className="font-bold text-slate-900">₹{t.amount}</p>
+                        </div>
+                        <div>
+                          <p className="text-[9px] font-black text-slate-400 uppercase mb-1">Total Due</p>
+                          <p className="font-black text-indigo-600">₹{calcTotal(t)}</p>
+                        </div>
+                      </div>
+                    </div>
+                    <button 
+                      onClick={() => { setEditingTenant(t); setIsMeterModalOpen(true); }}
+                      className="px-10 py-5 bg-slate-900 text-white rounded-2xl font-black uppercase text-[10px] tracking-[0.2em] shadow-xl hover:bg-indigo-600 transition-all flex items-center gap-2"
+                    >
+                      <Zap size={14}/> Update Meter
+                    </button>
+                 </div>
+               ))}
+            </div>
+          )}
+
+          {/* NOTIFICATIONS TAB */}
+          {activeTab === 'Notifications' && (
+            <div className="max-w-2xl mx-auto space-y-6 animate-in fade-in zoom-in-95 duration-500">
+               <div className="flex items-center justify-between mb-8">
+                  <h3 className="text-2xl font-black italic uppercase tracking-tighter">Activity Feed</h3>
+                  <button className="text-[10px] font-black text-slate-400 uppercase hover:text-indigo-600">Mark all as read</button>
+               </div>
+               {(notifications || []).map((n, i) => (
+                 <div key={i} className="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm flex gap-6 items-start hover:border-indigo-100 transition-all">
+                    <div className={`p-4 rounded-2xl ${n.message.includes('approval') ? 'bg-amber-50 text-amber-500' : 'bg-indigo-50 text-indigo-500'}`}>
+                      <Bell size={20}/>
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-sm font-bold text-slate-900 leading-tight mb-2">{n.message}</p>
+                      <div className="flex items-center gap-4">
+                        <span className="text-[10px] font-black text-slate-300 uppercase flex items-center gap-1"><Clock size={12}/> {n.time}</span>
+                        <button className="text-[10px] font-black text-indigo-600 uppercase">View</button>
+                      </div>
+                    </div>
+                 </div>
+               ))}
+            </div>
+          )}
+
+          {activeTab === 'Settings' && (
+            <div className="max-w-4xl space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
+               
+               {/* Profile Section */}
+               <section className="bg-white p-10 rounded-[3rem] border border-slate-100 shadow-sm flex flex-col md:flex-row items-center gap-10">
+                  <div className="relative group">
+                  <div className="w-32 h-32 bg-slate-900 rounded-[2.5rem] flex items-center justify-center text-white text-4xl font-black italic shadow-2xl">
+                     AD
+                  </div>
+                  <button className="absolute -bottom-2 -right-2 p-3 bg-indigo-600 text-white rounded-2xl shadow-xl hover:scale-110 transition-transform">
+                     <Upload size={18} />
+                  </button>
+                  </div>
+                  <div className="flex-1 text-center md:text-left">
+                  <h3 className="text-3xl font-black italic text-slate-900">Admin Account</h3>
+                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mt-1">Property Management ID: #LAND-2026-X</p>
+                  <div className="flex flex-wrap gap-3 mt-6 justify-center md:justify-start">
+                     <button className="px-6 py-3 bg-slate-100 text-slate-600 rounded-xl font-black uppercase text-[9px] tracking-widest hover:bg-slate-200 transition-all">Edit Profile</button>
+                     <button className="px-6 py-3 bg-slate-100 text-slate-600 rounded-xl font-black uppercase text-[9px] tracking-widest hover:bg-slate-200 transition-all">Change Password</button>
+                  </div>
+                  </div>
+               </section>
+
+               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                  {/* Property Configuration */}
+                  <section className="bg-white p-10 rounded-[3rem] border border-slate-100 shadow-sm space-y-6">
+                  <h4 className="text-[11px] font-black text-slate-900 uppercase tracking-[0.3em] flex items-center gap-2 mb-4">
+                     <Building size={16} className="text-indigo-600"/> Property Rates
+                  </h4>
+                  
+                  <div className="space-y-4">
+                     <div className="flex items-center justify-between p-5 bg-slate-50 rounded-2xl border border-slate-100">
+                        <div>
+                        <p className="text-[9px] font-black text-slate-400 uppercase">Electricity Unit Rate</p>
+                        <p className="font-black italic text-slate-900">₹10.00 <span className="text-[9px] not-italic text-slate-400">/ Unit</span></p>
+                        </div>
+                        <button className="text-indigo-600 hover:rotate-90 transition-transform"><Settings size={18}/></button>
+                     </div>
+
+                     <div className="flex items-center justify-between p-5 bg-slate-50 rounded-2xl border border-slate-100">
+                        <div>
+                        <p className="text-[9px] font-black text-slate-400 uppercase">Late Payment Fee</p>
+                        <p className="font-black italic text-slate-900">₹50.00 <span className="text-[9px] not-italic text-slate-400">/ Day</span></p>
+                        </div>
+                        <button className="text-indigo-600 hover:rotate-90 transition-transform"><Settings size={18}/></button>
+                     </div>
+
+                     <div className="flex items-center justify-between p-5 bg-slate-50 rounded-2xl border border-slate-100">
+                        <div>
+                        <p className="text-[9px] font-black text-slate-400 uppercase">Water Flat Rate</p>
+                        <p className="font-black italic text-slate-900">₹200.00 <span className="text-[9px] not-italic text-slate-400">/ Month</span></p>
+                        </div>
+                        <button className="text-indigo-600 hover:rotate-90 transition-transform"><Settings size={18}/></button>
+                     </div>
+                  </div>
+                  </section>
+
+                  {/* Preferences & Security */}
+                  <section className="bg-white p-10 rounded-[3rem] border border-slate-100 shadow-sm space-y-6">
+                  <h4 className="text-[11px] font-black text-slate-900 uppercase tracking-[0.3em] flex items-center gap-2 mb-4">
+                     <ShieldCheck size={16} className="text-indigo-600"/> Security & App
+                  </h4>
+                  
+                  <div className="space-y-4">
+                     <div className="flex items-center justify-between p-2">
+                        <span className="text-[10px] font-black text-slate-500 uppercase">Email Notifications</span>
+                        <div className="w-12 h-6 bg-indigo-600 rounded-full relative p-1 cursor-pointer">
+                        <div className="w-4 h-4 bg-white rounded-full absolute right-1" />
+                        </div>
+                     </div>
+                     
+                     <div className="flex items-center justify-between p-2 border-t border-slate-50 pt-4">
+                        <span className="text-[10px] font-black text-slate-500 uppercase">Two-Factor Auth</span>
+                        <div className="w-12 h-6 bg-slate-200 rounded-full relative p-1 cursor-pointer">
+                        <div className="w-4 h-4 bg-white rounded-full absolute left-1" />
+                        </div>
+                     </div>
+
+                     <div className="flex items-center justify-between p-2 border-t border-slate-50 pt-4">
+                        <span className="text-[10px] font-black text-slate-500 uppercase">WhatsApp Alerts</span>
+                        <div className="w-12 h-6 bg-indigo-600 rounded-full relative p-1 cursor-pointer">
+                        <div className="w-4 h-4 bg-white rounded-full absolute right-1" />
                         </div>
                      </div>
                   </div>
+
+                  <div className="pt-6">
+                     <button onClick={logout} className="w-full bg-red-50 text-red-500 py-5 rounded-2xl font-black uppercase text-[10px] tracking-[0.2em] hover:bg-red-500 hover:text-white transition-all flex items-center justify-center gap-3">
+                        <LogOut size={16}/> Terminate Session
+                     </button>
+                  </div>
+                  </section>
                </div>
             </div>
-          )}
+            )}
         </main>
+      </div>
 
-        {selectedTenant && (
-          <div className="fixed inset-0 z-[100] bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-6">
-             <div className="bg-white w-full max-w-lg rounded-[3.5rem] p-12 relative shadow-2xl animate-in zoom-in-95">
-                <button onClick={() => setSelectedTenant(null)} className="absolute top-10 right-10 text-slate-300 hover:text-slate-900"><X size={24}/></button>
-                <div className="flex items-center gap-8 mb-12">
-                   <div className="w-24 h-24 bg-indigo-600 text-white rounded-[2rem] flex items-center justify-center text-4xl font-black italic">{selectedTenant.name[0]}</div>
-                   <div><h4 className="text-3xl font-black italic">{selectedTenant.name}</h4><p className="text-sm font-bold text-slate-400 uppercase tracking-widest">{selectedTenant.room}</p></div>
-                </div>
-                <div className="grid grid-cols-2 gap-6">
-                   <div className="p-5 bg-slate-50 rounded-2xl"><p className="text-[9px] font-black text-slate-400 uppercase mb-2">Phone</p><p className="text-sm font-black italic">{selectedTenant.phone}</p></div>
-                   <div className="p-5 bg-slate-50 rounded-2xl"><p className="text-[9px] font-black text-slate-400 uppercase mb-2">Joining</p><p className="text-sm font-black italic">{selectedTenant.joinDate}</p></div>
-                   <div className="p-5 bg-slate-50 rounded-2xl col-span-2"><p className="text-[9px] font-black text-slate-400 uppercase mb-2">Contact Email</p><p className="text-sm font-black italic">{selectedTenant.email}</p></div>
-                </div>
-                <button className="w-full mt-10 py-5 bg-slate-900 text-white rounded-2xl font-black uppercase text-[10px] tracking-widest shadow-2xl">Save Tenant Overrides</button>
+      {/* --- METER MODAL --- */}
+      {isMeterModalOpen && editingTenant && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-6">
+          <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={() => setIsMeterModalOpen(false)} />
+          <div className="bg-white w-full max-w-md rounded-[3.5rem] p-12 shadow-2xl relative animate-in fade-in zoom-in-95 duration-300">
+             <div className="flex justify-between items-center mb-10">
+               <div>
+                 <h3 className="text-2xl font-black italic text-slate-900">Meter Update</h3>
+                 <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{editingTenant.name} • Room {editingTenant.room}</p>
+               </div>
+               <button onClick={() => setIsMeterModalOpen(false)} className="w-12 h-12 bg-slate-50 rounded-2xl flex items-center justify-center text-slate-400 hover:text-red-500 hover:bg-red-50 transition-all">
+                 <X size={20}/>
+               </button>
+             </div>
+
+             <div className="space-y-6">
+               <div className="bg-slate-50 p-6 rounded-3xl border border-slate-100">
+                  <p className="text-[9px] font-black text-slate-400 uppercase mb-2">Previous Reading Recorded</p>
+                  <p className="text-xl font-black text-slate-900 italic">{editingTenant.currReading} Units</p>
+               </div>
+
+               <div className="relative">
+                 <p className="text-[9px] font-black text-slate-400 uppercase mb-2 ml-4">New Reading Value</p>
+                 <input 
+                   type="number" 
+                   value={newReading} 
+                   onChange={(e) => setNewReading(e.target.value)} 
+                   placeholder="0000"
+                   autoFocus
+                   className="w-full bg-slate-900 text-white p-8 rounded-[2rem] text-3xl font-black italic outline-none border-4 border-indigo-600/0 focus:border-indigo-600 transition-all" 
+                 />
+                 <div className="absolute right-8 bottom-8 text-indigo-400 font-black italic text-sm">Units</div>
+               </div>
+
+               <button 
+                 onClick={updateMeterReading} 
+                 className="w-full bg-indigo-600 text-white py-6 rounded-[2rem] font-black uppercase text-xs tracking-[0.3em] shadow-xl shadow-indigo-200 hover:bg-slate-900 transition-all mt-4"
+               >
+                 Confirm Update
+               </button>
              </div>
           </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+// export default AdminPortal;
+
+const StatCard = ({ label, val, icon, color }) => (
+  <div className="bg-white p-10 rounded-[2.5rem] border shadow-sm relative overflow-hidden">
+    <div className={`absolute top-0 right-0 p-8 text-${color}-500/10`}>{icon}</div>
+    <p className="text-[9px] font-black uppercase text-slate-400 mb-2 tracking-widest">{label}</p>
+    <h3 className="text-3xl font-black italic">{val}</h3>
+  </div>
+);
+
+// --- Resident View ---
+const TenantPortal = ({ tenant, logout, calcElec, calcLate, calcTotal }) => {
+  const [activeTab, setActiveTab] = useState('Overview');
+  
+  // Calculate real-time values
+  const electricity = calcElec(tenant);
+  const lateFee = calcLate(tenant);
+  const total = calcTotal(tenant);
+
+  return (
+    <div className="min-h-screen bg-[#FDFDFD] flex flex-col">
+      {/* Header Navigation */}
+      <header className="h-24 bg-white border-b px-6 md:px-12 flex items-center justify-between sticky top-0 z-50">
+        <div className="flex items-center gap-3 italic font-black text-xl text-indigo-600">
+          <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center not-italic text-white text-sm">H</div>
+          MyHome
+        </div>
+        <nav className="flex gap-4 md:gap-10">
+          {['Overview', 'History', 'Settings'].map(t => (
+            <button 
+              key={t} 
+              onClick={() => setActiveTab(t)} 
+              className={`text-[10px] font-black uppercase tracking-widest pb-1 border-b-2 transition-all ${
+                activeTab === t ? 'text-indigo-600 border-indigo-600' : 'text-slate-300 border-transparent'
+              }`}
+            >
+              {t}
+            </button>
+          ))}
+          <button onClick={logout} className="text-[10px] font-black uppercase text-red-500 hover:text-red-700 transition-colors">
+            <LogOut size={16} className="inline mr-1 md:hidden" />
+            <span className="hidden md:inline">Sign Out</span>
+          </button>
+        </nav>
+      </header>
+
+      <main className="p-6 md:p-12 max-w-6xl mx-auto w-full flex-1">
+        {/* Tab Switching Logic */}
+        {activeTab === 'Overview' && (
+          <div className="space-y-12 animate-in fade-in slide-in-from-bottom-4 duration-500">
+            {/* Hero Invoice Card */}
+            <div className="bg-slate-900 rounded-[3.5rem] p-8 md:p-16 text-white shadow-2xl relative overflow-hidden">
+              <p className="text-[10px] font-black uppercase text-slate-400 mb-4 tracking-widest italic">Current Invoice • {tenant.room}</p>
+              <h2 className="text-5xl md:text-7xl font-black tracking-tighter italic mb-8">₹{total.toLocaleString()}</h2>
+              
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12 border-t border-white/10 pt-8">
+                <div><p className="text-[9px] uppercase text-slate-500 mb-1">Monthly Rent</p><p className="font-bold text-lg">₹{tenant.amount.toLocaleString()}</p></div>
+                <div><p className="text-[9px] uppercase text-slate-500 mb-1">Electricity ({tenant.currReading - tenant.prevReading} units)</p><p className="font-bold text-lg">₹{electricity.toLocaleString()}</p></div>
+                {lateFee > 0 && <div><p className="text-[9px] uppercase text-red-400 mb-1">Late Fee (Grace Period Over)</p><p className="font-bold text-red-400 text-lg">₹{lateFee.toLocaleString()}</p></div>}
+              </div>
+
+              <div className="flex flex-wrap gap-4 items-center">
+                <div className={`inline-flex items-center gap-3 px-8 py-4 rounded-2xl font-black uppercase text-xs border ${
+                  tenant.status === 'Paid' ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' : 'bg-slate-500/10 text-slate-400 border-white/10'
+                }`}>
+                  {tenant.status === 'Paid' ? <CheckCircle2 size={20}/> : <Clock size={20}/>} {tenant.status}
+                </div>
+                {tenant.status !== 'Paid' && (
+                   <button className="bg-indigo-600 hover:bg-indigo-500 text-white px-10 py-4 rounded-2xl font-black uppercase text-xs transition-all shadow-xl shadow-indigo-900/20">
+                     Pay Bill Now
+                   </button>
+                )}
+              </div>
+            </div>
+
+            {/* Utility & Documents Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              <div className="bg-white p-10 rounded-[3rem] border border-slate-100 shadow-sm">
+                <h4 className="text-[10px] font-black uppercase text-slate-400 mb-6 tracking-widest italic flex items-center gap-2">
+                  <Zap size={14} className="text-indigo-600"/> Utility Tracking
+                </h4>
+                <div className="flex justify-between items-center bg-slate-50 p-6 rounded-3xl">
+                  <div><p className="text-[9px] font-black text-slate-400 uppercase">Prev. Meter</p><p className="text-xl font-bold">{tenant.prevReading}</p></div>
+                  <div className="h-px flex-1 bg-slate-200 mx-4 hidden sm:block"></div>
+                  <div className="text-right"><p className="text-[9px] font-black text-slate-400 uppercase">Curr. Meter</p><p className="text-xl font-bold">{tenant.currReading}</p></div>
+                </div>
+              </div>
+              <div className="bg-white p-10 rounded-[3rem] border border-slate-100 shadow-sm flex items-center justify-between">
+                <div>
+                  <h4 className="text-[10px] font-black uppercase text-slate-400 mb-1 tracking-widest italic flex items-center gap-2">
+                    <FileText size={14} className="text-indigo-600"/> Lease Documents
+                  </h4>
+                  <p className="text-xs font-bold text-slate-600">Standard_Agreement_2026.pdf</p>
+                </div>
+                <button className="p-4 bg-slate-50 text-slate-400 rounded-2xl hover:bg-indigo-600 hover:text-white transition-all">
+                  <Download size={20}/>
+                </button>
+              </div>
+            </div>
+          </div>
         )}
+
+        {activeTab === 'History' && <TenantHistory tenant={tenant} />}
+        {activeTab === 'Settings' && <TenantSettings tenant={tenant} />}
+      </main>
+    </div>
+  );
+};
+
+const TenantHistory = ({ tenant }) => {
+  const history = tenant.history || [];
+
+  return (
+    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
+      <div className="flex justify-between items-end px-4">
+        <div>
+          <h3 className="text-3xl font-black italic uppercase text-slate-900 tracking-tighter">Payment Ledger</h3>
+          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mt-1">Verified Transaction Records</p>
+        </div>
+      </div>
+
+      <div className="bg-white rounded-[3rem] border border-slate-100 shadow-sm overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full text-left border-collapse">
+            <thead className="bg-slate-50 text-[10px] font-black text-slate-400 uppercase tracking-widest">
+              <tr>
+                <th className="px-10 py-6">Billing Date</th>
+                <th className="px-10 py-6">Description</th>
+                <th className="px-10 py-6">Reference ID</th>
+                <th className="px-10 py-6 text-right">Amount Paid</th>
+              </tr>
+            </thead>
+            <tbody>
+              {history.length > 0 ? (
+                history.map((item, idx) => (
+                  <tr key={idx} className="border-b border-slate-50 last:border-0 hover:bg-slate-50/30 transition-colors">
+                    <td className="px-10 py-8 font-bold text-xs text-slate-500">{item.date}</td>
+                    <td className="px-10 py-8">
+                      <p className="text-xs font-black italic text-slate-900">{item.month} Rent + Utilities</p>
+                      <p className="text-[9px] text-emerald-500 uppercase font-bold mt-1">Status: Verified</p>
+                    </td>
+                    <td className="px-10 py-8 font-mono text-[10px] text-slate-400 uppercase">#HMLY-2026-{idx + 101}</td>
+                    <td className="px-10 py-8 text-right font-black italic text-sm text-slate-900">
+                      ₹{item.amount.toLocaleString()}
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan="4" className="px-10 py-20 text-center text-slate-300 font-black uppercase text-[10px] tracking-widest italic">
+                    No payment history found.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   );
 };
 
-const TenantPortal = ({ tenant, tenants, showPayment, setShowPayment, onPay, logout }) => {
-  const [activeTab, setActiveTab] = useState('Overview');
-  const [profileOpen, setProfileOpen] = useState(false);
-
+const TenantSettings = ({ tenant }) => {
   return (
-    <div className="min-h-screen bg-[#FDFDFD] flex flex-col font-sans">
-      <header className="h-24 bg-white border-b px-6 md:px-12 flex items-center justify-between sticky top-0 z-50">
-         <div className="flex items-center gap-3 italic font-black text-xl text-indigo-600"><div className="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center text-white italic not-italic text-sm">H</div> MyHome</div>
-         <nav className="hidden md:flex gap-10">
-            {['Overview', 'History', 'Documents', 'Settings'].map(t => (
-               <button key={t} onClick={() => setActiveTab(t)} className={`text-[10px] font-black uppercase tracking-widest pb-1 border-b-2 transition-all ${activeTab === t ? 'text-indigo-600 border-indigo-600' : 'text-slate-300 border-transparent'}`}>{t}</button>
-            ))}
-         </nav>
-         <div className="relative">
-            <button onClick={() => setProfileOpen(!profileOpen)} className="w-12 h-12 bg-slate-900 text-white rounded-2xl flex items-center justify-center font-black shadow-xl hover:scale-105 transition-all">RK</button>
-            {profileOpen && (
-               <div className="absolute right-0 mt-4 w-52 bg-white rounded-2xl shadow-2xl border p-2 z-[60]">
-                  <button onClick={() => {setActiveTab('Settings'); setProfileOpen(false);}} className="w-full flex items-center gap-3 p-4 text-[10px] font-black text-slate-600 hover:bg-slate-50 rounded-xl uppercase"><User size={16}/> My Profile</button>
-                  <button onClick={logout} className="w-full flex items-center gap-3 p-4 text-[10px] font-black text-red-500 hover:bg-red-50 rounded-xl uppercase border-t mt-2 pt-4"><LogOut size={16}/> Sign Out</button>
-               </div>
-            )}
-         </div>
-      </header>
+    <div className="max-w-5xl space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-500">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
+        
+        {/* Profile Form */}
+        <div className="lg:col-span-2 bg-white p-8 md:p-12 rounded-[3.5rem] border border-slate-100 shadow-sm">
+          <div className="flex items-center gap-4 mb-10">
+            <div className="w-12 h-12 bg-indigo-600 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-indigo-200">
+              <User size={24} />
+            </div>
+            <div>
+              <h4 className="text-xs font-black uppercase italic text-indigo-600">Account Security</h4>
+              <p className="text-xl font-black italic">Personal Information</p>
+            </div>
+          </div>
 
-      <nav className="md:hidden flex justify-around bg-white border-b py-4">
-         {['Overview', 'History', 'Documents'].map(t => (
-            <button key={t} onClick={() => setActiveTab(t)} className={`text-[9px] font-black uppercase tracking-widest ${activeTab === t ? 'text-indigo-600' : 'text-slate-300'}`}>{t}</button>
-         ))}
-      </nav>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div className="space-y-2">
+              <label className="text-[9px] font-black text-slate-400 uppercase ml-2 tracking-widest">Full Name</label>
+              <input type="text" defaultValue={tenant.name} className="w-full bg-slate-50 border-none rounded-2xl p-5 font-bold text-sm focus:ring-2 focus:ring-indigo-500/20" />
+            </div>
+            <div className="space-y-2">
+              <label className="text-[9px] font-black text-slate-400 uppercase ml-2 tracking-widest">Mobile Number</label>
+              <input type="text" defaultValue={tenant.phone} className="w-full bg-slate-50 border-none rounded-2xl p-5 font-bold text-sm focus:ring-2 focus:ring-indigo-500/20" />
+            </div>
+            <div className="md:col-span-2 space-y-2">
+              <label className="text-[9px] font-black text-slate-400 uppercase ml-2 tracking-widest">Email Address</label>
+              <input type="email" defaultValue={tenant.email} className="w-full bg-slate-50 border-none rounded-2xl p-5 font-bold text-sm focus:ring-2 focus:ring-indigo-500/20" />
+            </div>
+          </div>
 
-      <main className="p-6 md:p-12 max-w-6xl mx-auto w-full flex-1">
-        {activeTab === 'Overview' && (
-           <div className="space-y-12 animate-in slide-in-from-bottom-8">
-              <div className="bg-indigo-600 rounded-[3.5rem] p-10 md:p-16 text-white shadow-2xl relative overflow-hidden group">
-                 <div className="absolute top-[-20%] right-[-10%] w-96 h-96 bg-white/10 rounded-full blur-3xl"></div>
-                 <p className="text-[10px] font-black uppercase text-indigo-200 mb-4 tracking-widest italic">March 2026 Statement • {tenant.room}</p>
-                 <h2 className="text-6xl md:text-7xl font-black tracking-tighter italic mb-12">₹{tenant.amount}</h2>
-                 <div className="flex gap-4">
-                    {tenant.status === 'Paid' ? (
-                        <div className="flex items-center gap-3 bg-white/20 px-8 py-4 rounded-2xl font-black uppercase text-xs"><CheckCircle2 size={20}/> Payment Confirmed</div>
-                    ) : (
-                        // Fixed "Pay Now" logic for mobile by explicitly handling button behavior
-                        <button 
-                          type="button"
-                          onClick={(e) => {
-                            e.preventDefault();
-                            setShowPayment(true);
-                          }} 
-                          className="bg-white text-indigo-600 px-10 py-5 rounded-2xl font-black uppercase text-xs shadow-2xl hover:scale-110 active:scale-95 transition-all z-10"
-                        >
-                          Pay Rent Now
-                        </button>
-                    )}
-                 </div>
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                 <div className="bg-white p-8 rounded-[3rem] border shadow-sm flex items-center gap-6">
-                    <div className="w-14 h-14 bg-slate-50 text-indigo-600 rounded-2xl flex items-center justify-center"><Calendar size={28}/></div>
-                    <div><p className="text-[9px] font-black text-slate-400 uppercase">Due Date</p><p className="text-xl font-black italic">05 Apr 2026</p></div>
-                 </div>
-                 <div className="bg-white p-8 rounded-[3rem] border shadow-sm flex items-center gap-6">
-                    <div className="w-14 h-14 bg-slate-50 text-indigo-600 rounded-2xl flex items-center justify-center"><Zap size={28}/></div>
-                    <div><p className="text-[9px] font-black text-slate-400 uppercase">Utilities</p><p className="text-xl font-black italic">Included in Rent</p></div>
-                 </div>
-              </div>
-           </div>
-        )}
+          <button className="mt-10 px-10 py-5 bg-slate-900 text-white rounded-[2rem] font-black uppercase text-[10px] tracking-[0.2em] hover:bg-indigo-600 transition-all shadow-xl shadow-slate-200">
+            Save Profile Changes
+          </button>
+        </div>
 
-        {activeTab === 'History' && (
-           <div className="space-y-6 animate-in slide-in-from-bottom-4">
-              <h3 className="text-3xl font-black italic uppercase mb-8">Payment Timeline</h3>
-              {[
-                { month: 'February 2026', amount: '12,500', date: '05 Feb', status: 'Paid', ref: 'TXN-99210' },
-                { month: 'January 2026', amount: '12,500', date: '02 Jan', status: 'Paid', ref: 'TXN-88122' },
-                { month: 'December 2025', amount: '12,500', date: '04 Dec', status: 'Paid', ref: 'TXN-77341' }
-              ].map((item, idx) => (
-                <div key={idx} className="bg-white p-8 rounded-[2.5rem] border flex items-center justify-between group hover:border-indigo-600 transition-all">
-                  <div className="flex items-center gap-6">
-                    <div className="w-12 h-12 bg-emerald-50 text-emerald-600 rounded-2xl flex items-center justify-center font-black text-xs">OK</div>
-                    <div>
-                      <p className="text-lg font-black italic">{item.month}</p>
-                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Ref: {item.ref} • Paid on {item.date}</p>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-xl font-black italic text-slate-900">₹{item.amount}</p>
-                    <span className="text-[8px] font-black text-emerald-500 uppercase">Settled</span>
+        {/* Sidebar Preferences */}
+        <div className="space-y-8">
+          <div className="bg-white p-10 rounded-[3rem] border border-slate-100 shadow-sm">
+            <h4 className="text-[10px] font-black uppercase mb-6 italic tracking-widest text-slate-400">Notifications</h4>
+            <div className="space-y-4">
+              {['Rent Reminders', 'Payment Confirmations'].map(pref => (
+                <div key={pref} className="flex justify-between items-center p-4 bg-slate-50 rounded-2xl border border-transparent hover:border-slate-100 transition-all">
+                  <span className="text-[10px] font-black uppercase">{pref}</span>
+                  <div className="w-10 h-5 bg-emerald-500 rounded-full flex items-center px-1 cursor-pointer">
+                    <div className="w-3 h-3 bg-white rounded-full ml-auto"></div>
                   </div>
                 </div>
               ))}
-           </div>
-        )}
+            </div>
+          </div>
 
-        {activeTab === 'Documents' && (
-           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 animate-in fade-in">
-              <h3 className="text-3xl font-black italic uppercase col-span-full mb-4">Resident Documents</h3>
-              {['Lease_Agreement.pdf', 'Police_Verification.pdf', 'Rent_Receipt_Feb.pdf'].map(doc => (
-                 <div key={doc} className="bg-white p-10 rounded-[3rem] border shadow-sm group hover:bg-indigo-600 hover:text-white transition-all">
-                    <div className="w-16 h-16 bg-slate-50 rounded-2xl flex items-center justify-center mb-6 group-hover:bg-white/10 transition-all"><FileText className="text-indigo-600 group-hover:text-white" size={28}/></div>
-                    <p className="text-xl font-black italic mb-2">{doc.replace('_', ' ')}</p>
-                    <p className="text-[10px] font-bold text-slate-300 uppercase mb-8 group-hover:text-indigo-200 uppercase">Verifed • 2.4 MB</p>
-                    <button className="text-[9px] font-black uppercase tracking-widest border-b-2 border-slate-100 group-hover:border-white/20 pb-1">Download Copy</button>
-                 </div>
-              ))}
-           </div>
-        )}
-
-        {activeTab === 'Settings' && (
-           <div className="max-w-xl bg-white p-12 rounded-[3.5rem] border shadow-sm space-y-8 animate-in slide-in-from-bottom-8">
-              <h3 className="text-3xl font-black italic uppercase">Resident Info</h3>
-              <div className="space-y-4">
-                 <div className="p-8 bg-slate-50 rounded-3xl"><p className="text-[9px] font-black text-slate-400 uppercase mb-2">Legal Name</p><p className="text-xl font-black italic">{tenant.name}</p></div>
-                 <div className="p-8 bg-slate-50 rounded-3xl"><p className="text-[9px] font-black text-slate-400 uppercase mb-2">Contact Mobile</p><p className="text-xl font-black italic">{tenant.phone}</p></div>
-                 <button className="w-full py-5 bg-slate-900 text-white rounded-[1.5rem] font-black uppercase text-[10px] tracking-widest shadow-2xl">Update Records</button>
-              </div>
-           </div>
-        )}
-      </main>
-
-      {showPayment && (
-        <div className="fixed inset-0 z-[100] bg-slate-900/60 backdrop-blur-md flex items-center justify-center p-6">
-           <div className="bg-white w-full max-w-4xl rounded-[4rem] overflow-hidden shadow-2xl grid grid-cols-1 md:grid-cols-5 animate-in zoom-in-95 duration-300">
-              <div className="md:col-span-2 bg-slate-50 p-12 border-r flex flex-col justify-between">
-                 <div>
-                    <button onClick={() => setShowPayment(false)} className="flex items-center gap-2 text-[10px] font-black text-slate-300 uppercase mb-12"><ArrowLeft size={16}/> Go Back</button>
-                    <h4 className="text-4xl font-black italic uppercase mb-2">Checkout</h4>
-                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest italic">A-101 Homely Square</p>
-                 </div>
-                 <div className="pt-8 border-t border-slate-200">
-                    <p className="text-[10px] font-black text-slate-400 uppercase mb-2">Rent for March 2026</p>
-                    <p className="text-5xl font-black italic text-indigo-600">₹{tenant.amount}</p>
-                 </div>
-              </div>
-              <div className="md:col-span-3 p-16 flex flex-col justify-center space-y-8">
-                 <div className="grid grid-cols-2 gap-4">
-                    <button type="button" onClick={() => onPay('UPI')} className="p-6 border-2 border-indigo-600 rounded-3xl bg-indigo-50 flex flex-col items-center gap-4">
-                       <Smartphone className="text-indigo-600" size={32}/>
-                       <span className="text-[10px] font-black uppercase tracking-widest">UPI Payment</span>
-                    </button>
-                    <button type="button" onClick={() => onPay('Debit Card')} className="p-6 border-2 border-slate-100 rounded-3xl hover:border-indigo-600 transition-all flex flex-col items-center gap-4 text-slate-400 hover:text-indigo-600">
-                       <CardIcon size={32}/>
-                       <span className="text-[10px] font-black uppercase tracking-widest">Debit Card</span>
-                    </button>
-                 </div>
-                 {/* Final verification button for mobile users */}
-                 <button 
-                  type="button"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    onPay('UPI');
-                  }} 
-                  className="w-full bg-slate-900 text-white py-6 rounded-3xl font-black uppercase text-[11px] tracking-[0.4em] shadow-2xl hover:bg-indigo-600 active:bg-indigo-700 transition-all"
-                 >
-                   Verify & Pay ₹{tenant.amount}
-                 </button>
-                 <p className="text-center text-[9px] font-black text-slate-300 uppercase flex items-center justify-center gap-2"><ShieldCheck size={14}/> 100% Secure Gateway</p>
-              </div>
-           </div>
+          <div className="bg-indigo-600 p-10 rounded-[3rem] text-white shadow-2xl shadow-indigo-200 relative overflow-hidden group">
+            <div className="relative z-10">
+              <h4 className="text-[10px] font-black uppercase mb-2 italic text-indigo-200">Room Details</h4>
+              <p className="text-3xl font-black italic mb-4">{tenant.room}</p>
+              <p className="text-[9px] font-bold text-indigo-100 uppercase tracking-[0.2em]">Joined: {tenant.joinDate}</p>
+            </div>
+            <Home className="absolute -right-6 -bottom-6 text-white/10 group-hover:scale-110 transition-transform duration-700" size={120} />
+          </div>
         </div>
-      )}
+      </div>
     </div>
   );
 };
